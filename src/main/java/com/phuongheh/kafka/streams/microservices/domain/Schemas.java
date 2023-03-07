@@ -1,6 +1,7 @@
 package com.phuongheh.kafka.streams.microservices.domain;
 
 import com.phuongheh.kafka.streams.avro.microservices.*;
+import com.phuongheh.kafka.streams.microservices.utils.MicroserviceUtils;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -9,17 +10,22 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.*;
+import static io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig.BASIC_AUTH_CREDENTIALS_SOURCE;
+import static io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig.USER_INFO_CONFIG;
+import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
+
 
 public class Schemas {
+
     public static SpecificAvroSerde<OrderValue> ORDER_VALUE_SERDE = new SpecificAvroSerde<>();
 
     public static class Topic<K, V> {
+
         private final String name;
         private final Serde<K> keySerde;
         private final Serde<V> valueSerde;
 
-        public Topic(String name, Serde<K> keySerde, Serde<V> valueSerde) {
+        Topic(final String name, final Serde<K> keySerde, final Serde<V> valueSerde) {
             this.name = name;
             this.keySerde = keySerde;
             this.valueSerde = valueSerde;
@@ -38,7 +44,6 @@ public class Schemas {
             return name;
         }
 
-        @Override
         public String toString() {
             return name;
         }
@@ -58,12 +63,12 @@ public class Schemas {
         }
 
         private static void createTopics() {
-            ORDERS = new Topic<>("orders", Serdes.Long(), new SpecificAvroSerde<>());
+            ORDERS = new Topic<>("orders", Serdes.String(), new SpecificAvroSerde<>());
             ORDERS_ENRICHED = new Topic<>("orders-enriched", Serdes.String(), new SpecificAvroSerde<>());
             PAYMENTS = new Topic<>("payments", Serdes.String(), new SpecificAvroSerde<>());
             CUSTOMERS = new Topic<>("customers", Serdes.Long(), new SpecificAvroSerde<>());
             ORDER_VALIDATIONS = new Topic<>("order-validations", Serdes.String(), new SpecificAvroSerde<>());
-            WAREHOUSE_INVENTORY = new Topic<>("warehouse-inventory", Serdes.String(), new SpecificAvroSerde<>());
+            WAREHOUSE_INVENTORY = new Topic<>("warehouse-inventory", new MicroserviceUtils.ProductTypeSerde(), Serdes.Integer());
             ORDER_VALUE_SERDE = new SpecificAvroSerde<>();
         }
     }
@@ -80,15 +85,15 @@ public class Schemas {
     }
 
     public static void configureSerdes(final Properties config) {
-        Topics.createTopics();
+        Topics.createTopics(); //wipe cached schema registry
         for (final Topic<?, ?> topic : Topics.ALL.values()) {
-            configureSerdes(topic.keySerde, config, true);
-            configureSerdes(topic.valueSerde, config, false);
+            configureSerde(topic.keySerde(), config, true);
+            configureSerde(topic.valueSerde(), config, false);
         }
-        configureSerdes(ORDER_VALUE_SERDE, config, false);
+        configureSerde(ORDER_VALUE_SERDE, config, false);
     }
 
-    private static void configureSerdes(final Serde<?> serde, final Properties config, final Boolean isKey) {
+    private static void configureSerde(final Serde<?> serde, final Properties config, final Boolean isKey) {
         if (serde instanceof SpecificAvroSerde) {
             serde.configure(buildSchemaRegistryConfigMap(config), isKey);
         }
