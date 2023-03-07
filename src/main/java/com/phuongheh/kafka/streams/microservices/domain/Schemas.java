@@ -79,16 +79,16 @@ public class Schemas {
         return map;
     }
 
-    public static void configureSerde(final Properties config) {
+    public static void configureSerdes(final Properties config) {
         Topics.createTopics();
         for (final Topic<?, ?> topic : Topics.ALL.values()) {
-            configureSerde(topic.keySerde, config, true);
-            configureSerde(topic.valueSerde, config, false);
+            configureSerdes(topic.keySerde, config, true);
+            configureSerdes(topic.valueSerde, config, false);
         }
-        configureSerde(ORDER_VALUE_SERDE, config, false);
+        configureSerdes(ORDER_VALUE_SERDE, config, false);
     }
 
-    private static void configureSerde(final Serde<?> serde, final Properties config, final Boolean isKey) {
+    private static void configureSerdes(final Serde<?> serde, final Properties config, final Boolean isKey) {
         if (serde instanceof SpecificAvroSerde) {
             serde.configure(buildSchemaRegistryConfigMap(config), isKey);
         }

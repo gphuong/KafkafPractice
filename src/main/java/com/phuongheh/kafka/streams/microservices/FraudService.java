@@ -130,7 +130,7 @@ public class FraudService implements Service {
                 }).orElse(new Properties());
         final String schemaRegistryUrl = cl.getOptionValue("schema-registry", DEFAULT_SCHEMA_REGISTRY_URL);
         defaultConfig.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
-        Schemas.configureSerde(defaultConfig);
+        Schemas.configureSerdes(defaultConfig);
 
         service.start(cl.getOptionValue("bootstrap-servers", DEFAULT_BOOTSTRAP_SERVERS),
                 cl.getOptionValue("state-dir", "/tmp/kafka-streams-example"),
