@@ -50,6 +50,20 @@ public class MonitoringInterceptorUtils {
 
     }
 
+    public static void maybeConfigureInterceptorsProducer(final Properties producerConfig) {
+        if (hasMonitoringProducerInterceptor()) {
+            producerConfig.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, PRODUCER_INTERCEPTOR);
+            addMonitoringPrefixedConfigs(producerConfig);
+        }
+    }
+
+    public static void maybeConfigureInterceptorsConsumer(final Properties consumerConfig) {
+        if (hasMonitoringConsumerInterceptor()) {
+            consumerConfig.put(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG, CONSUMER_INTERCEPTOR);
+            addMonitoringPrefixedConfigs(consumerConfig);
+        }
+    }
+
     private static boolean hasMonitoringProducerInterceptor() {
         return hasMonitoringInterceptor(PRODUCER_INTERCEPTOR);
     }
